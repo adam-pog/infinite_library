@@ -18,3 +18,22 @@ def dec(str)
   cipher.padding=0
   cipher.update(str)
 end
+
+
+def run
+  alpha = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", " "]
+
+  data = (1..SIZE).map { alpha.sample }.join('')
+
+
+  puts data.size
+
+
+  e = enc(data)
+  puts "Encrypted size: #{e.size}"
+
+  d = dec(e)
+  puts "Decrypted size: #{d.size}"
+
+  puts "Decryption successful: #{d == data}"
+end
