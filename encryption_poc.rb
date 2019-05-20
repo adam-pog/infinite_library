@@ -21,13 +21,17 @@ end
 
 
 def run
-  results = { successful: 0, failures: 0, size_mismatch: 0 }
+  results = { successful: 0, failures: 0, size_mismatch: 0, num_range_error: 0 }
   alpha = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", " "]
 
   100.times do
     data = (1..SIZE).map { alpha.sample }.join('')
 
     e = enc(data)
+    e.chars.map do |char|
+      num = char.ord
+      results[:num_range_error] += 1 if num < 0 || num > 255
+    end
     # puts "Encrypted size: #{e.size}"
 
     d = dec(e)
@@ -43,4 +47,5 @@ def run
   puts "Successful: #{results[:successful]}"
   puts "Failures: #{results[:failures]}"
   puts "Size mismatch: #{results[:size_mismatch]}"
+  puts "Num range error: #{results[:num_range_error]}"
 end
