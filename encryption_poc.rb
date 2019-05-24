@@ -26,12 +26,10 @@ def run
   results = { successful: 0, failures: 0, size_mismatch: 0, num_range_error: 0 }
   alpha = (0..255).to_a.map{|x| NUM_TO_CHAR_MAP[x]}
 
-  1.times do
-    data = (1..SIZE).map { alpha.sample }.join('')
+  10.times do
+    data = (1..SIZE).map { CHAR_TO_NUM_MAP[alpha.sample].chr }.join('')
 
-    puts data.size
     e = enc(data)
-    puts e.size
     e.bytes.map do |num|
       # num = char.ord
 
