@@ -9,16 +9,16 @@ def enc(str)
   cipher.encrypt
   cipher.key = KEY
   cipher.padding = 0
-  (cipher.update(str).chars.map{|char| CHAR_MAPPING[char.ord]}).join('')
+  (cipher.update(str).chars.map{|char| NUM_TO_CHAR_MAP[char.ord]}).join('')
 end
 
-# dec is broken. Maybe map chars to chars and skip ord?
 def dec(str)
+  text = str.chars.map{|x| CHAR_TO_NUM_MAP[x].chr }.join('')
   cipher = OpenSSL::Cipher::AES.new(128, :CBC)
   cipher.decrypt
   cipher.key = KEY
   cipher.padding=0
-  (cipher.update(str).chars.map{|char| CHAR_MAPPING[char.ord]}).join('')
+  cipher.update(text)
 end
 
 
