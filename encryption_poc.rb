@@ -1,4 +1,5 @@
 require 'openssl'
+require './mappings'
 
 KEY = "\xBC\x00\xA5\xB5\x0E\xFBN\x1A0\xC7\xC3$\xBA\x00`\xBA"
 SIZE = 1312000
@@ -8,29 +9,35 @@ def enc(str)
   cipher.encrypt
   cipher.key = KEY
   cipher.padding = 0
-  cipher.update(str)
+  (cipher.update(str).bytes.map{|byte| NUM_TO_CHAR_MAP[byte]}).join('')
 end
 
 def dec(str)
+  text = str.chars.map{|x| CHAR_TO_NUM_MAP[x].chr }.join('')
   cipher = OpenSSL::Cipher::AES.new(128, :CBC)
   cipher.decrypt
   cipher.key = KEY
   cipher.padding=0
-  cipher.update(str)
+  cipher.update(text)
 end
 
 
 def run
   results = { successful: 0, failures: 0, size_mismatch: 0, num_range_error: 0 }
-  alpha = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", " "]
+  alpha = (0..255).to_a.map{|x| NUM_TO_CHAR_MAP[x]}
 
-  100.times do
-    data = (1..SIZE).map { alpha.sample }.join('')
+  10.times do
+    data = (1..SIZE).map { CHAR_TO_NUM_MAP[alpha.sample].chr }.join('')
 
     e = enc(data)
-    e.chars.map do |char|
-      num = char.ord
-      results[:num_range_error] += 1 if num < 0 || num > 255
+    e.bytes.map do |num|
+      # num = char.ord
+
+      if num < 0 || num > 255
+        puts num
+        results[:num_range_error] += 1
+      end
+      # results[:num_range_error] += 1 if num < 0 || num > 255
     end
     # puts "Encrypted size: #{e.size}"
 
