@@ -2,14 +2,28 @@ require 'openssl'
 require './mappings'
 
 KEY = "\xBC\x00\xA5\xB5\x0E\xFBN\x1A0\xC7\xC3$\xBA\x00`\xBA"
+IV = "\xD4\xF1\x95L\xC5\x91\x15&\x8F\x92\xFA\xB0\xE0:T\x8A"
 SIZE = 1312000
+TEST_ITERATIONS = 10
+
+# SIZE = 32
 
 def enc(str)
+  text = str.chars.map{|x| CHAR_TO_NUM_MAP[x].chr }.join('')
   cipher = OpenSSL::Cipher::AES.new(128, :CBC)
   cipher.encrypt
   cipher.key = KEY
+  cipher.iv = IV
   cipher.padding = 0
-  (cipher.update(str).bytes.map{|byte| NUM_TO_CHAR_MAP[byte]}).join('')
+
+  e = cipher.update(text)
+
+  cipher = OpenSSL::Cipher::AES.new(128, :CBC)
+  cipher.encrypt
+  cipher.key = KEY
+  cipher.iv = IV
+  cipher.padding = 0
+  (cipher.update(e.reverse).bytes.map{|byte| NUM_TO_CHAR_MAP[byte]}).join('')
 end
 
 def dec(str)
@@ -17,8 +31,17 @@ def dec(str)
   cipher = OpenSSL::Cipher::AES.new(128, :CBC)
   cipher.decrypt
   cipher.key = KEY
+  cipher.iv = IV
   cipher.padding=0
-  cipher.update(text)
+
+  d = cipher.update(text)
+
+  cipher = OpenSSL::Cipher::AES.new(128, :CBC)
+  cipher.decrypt
+  cipher.key = KEY
+  cipher.iv = IV
+  cipher.padding=0
+  (cipher.update(d.reverse).bytes.map{|byte| NUM_TO_CHAR_MAP[byte]}).join('')
 end
 
 
@@ -26,31 +49,23 @@ def run
   results = { successful: 0, failures: 0, size_mismatch: 0, num_range_error: 0 }
   alpha = (0..255).to_a.map{|x| NUM_TO_CHAR_MAP[x]}
 
-  10.times do
-    data = (1..SIZE).map { CHAR_TO_NUM_MAP[alpha.sample].chr }.join('')
-
+  TEST_ITERATIONS.times do
+    data = (1..SIZE).map { alpha.sample }.join('')
     e = enc(data)
-    e.bytes.map do |num|
-      # num = char.ord
 
+    e.bytes.map do |num|
       if num < 0 || num > 255
         puts num
         results[:num_range_error] += 1
       end
-      # results[:num_range_error] += 1 if num < 0 || num > 255
     end
-    # puts "Encrypted size: #{e.size}"
 
     d = dec(e)
-
     d == data ? results[:successful] += 1 : results[:failures] += 1
     results[:size_mismatch] += 1 if d.size != SIZE || e.size != SIZE
-    # puts "Decrypted size: #{d.size}"
-
-    # puts "Decryption successful: #{d == data}"
   end
 
-  puts 'Results out of 100: '
+  puts "Results out of #{TEST_ITERATIONS}: "
   puts "Successful: #{results[:successful]}"
   puts "Failures: #{results[:failures]}"
   puts "Size mismatch: #{results[:size_mismatch]}"
