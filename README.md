@@ -1,5 +1,5 @@
 # library_of_babel
-Implementing a virtual Library of Babel
+Implementing a digital Library of Babel
 
 This project is inspired by a similair project by Jonathan Basile (https://libraryofbabel.info), which was based on 
 a short story called The Library of Babel by Jorge Luis Borges.
