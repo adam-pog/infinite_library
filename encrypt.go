@@ -10,35 +10,44 @@ import (
     "runtime"
     "reflect"
     "io"
+    "github.com/julienschmidt/httprouter"
 )
 
 func main() {
+    mux := httprouter.New()
+    mux.GET("/book/:num", book)
+
     server := http.Server{
       Addr: "localhost:8080",
+      Handler: mux,
     }
-
-    http.HandleFunc("/book", log(handle))
 
     fmt.Println("Serving http://localhost:8080")
     server.ListenAndServe()
 }
 
-func handle(w http.ResponseWriter, r *http.Request){
-  start := time.Now()
-  textArr := strings.Split(strings.Repeat("Ĥ", Size), "")
-  plaintext := bytify(textArr)
+func book(w http.ResponseWriter, r *http.Request, p httprouter.Params){
+  num_arr := strings.Split(p.ByName("num"), "")
+  plaintext := bytify(num_arr)
+  fmt.Println(num_arr)
+  fmt.Println(plaintext[0:3199])
   cipher_text := encrypt(key, iv, plaintext)
 
-  fmt.Println(readable(cipher_text))
-  fmt.Fprintf(w, fmt.Sprintf("Time: %s\n", time.Since(start)))
-  io.WriteString(w, readable(cipher_text))
+
+  // fmt.Println(readable(cipher_text))
+  io.WriteString(w, readable(cipher_text[0:3199]))
+  io.WriteString(w, "\n\n\n")
+  io.WriteString(w, readable(cipher_text[1308800:1312000]))
 }
 
 func log(handler http.HandlerFunc) http.HandlerFunc {
   return func(w http.ResponseWriter, r *http.Request) {
     name := runtime.FuncForPC(reflect.ValueOf(handler).Pointer()).Name()
     fmt.Println("Handler function called - " + name)
+
+    start := time.Now()
     handler(w, r)
+    fmt.Println(fmt.Sprintf("Time: %s\n", time.Since(start)))
   }
 }
 
@@ -71,7 +80,7 @@ func decrypt(key []byte, iv []byte, encryptedText []byte) []byte {
 
 func readable(text []byte) string {
     plaintext := make([]string, 3200);
-    for i, v := range text[0:3199] {
+    for i, v := range text {
         plaintext[i] = NumToCharMap[v]
     }
 
