@@ -4,48 +4,42 @@ import (
     "crypto/aes"
     "crypto/cipher"
     "fmt"
-    "math/rand"
     "time"
-    "./mappings"
     "strings"
+    "net/http"
+    "runtime"
+    "reflect"
+    "io"
 )
 
-const Size = 40 * 80 * 410;
-
 func main() {
-    start := time.Now()
-
-    rand.Seed(time.Now().UnixNano());
-
-    key := make([]byte, 16)
-    rand.Read(key)
-
-    iv := make([]byte, 16)
-    rand.Read(iv)
-
-    textArr := strings.Split(strings.Repeat("Ĥ", Size), "")
-
-    plaintext := bytify(textArr)
-
-    encrypt(key, iv, plaintext)
-    enc := encrypt(key, iv, plaintext)
-
-    dec:=decrypt(key, iv, enc)
-    readable(dec)
-
-    fmt.Println("Time: ", time.Since(start))
-    match := true
-    for i, _ := range dec {
-        if dec[i] != plaintext[i] {
-            match = false;
-        }
+    server := http.Server{
+      Addr: "localhost:8080",
     }
 
-    fmt.Println("match: ", match)
-    fmt.Println("match (final): ", dec[0], dec[1])
-    fmt.Println("match (plain): ", plaintext[0], plaintext[1])
+    http.HandleFunc("/book", log(handle))
 
-    // fmt.Println(dec)
+    fmt.Println("Serving http://localhost:8080")
+    server.ListenAndServe()
+}
+
+func handle(w http.ResponseWriter, r *http.Request){
+  start := time.Now()
+  textArr := strings.Split(strings.Repeat("Ĥ", Size), "")
+  plaintext := bytify(textArr)
+  cipher_text := encrypt(key, iv, plaintext)
+
+  fmt.Println(readable(cipher_text))
+  fmt.Fprintf(w, fmt.Sprintf("Time: %s\n", time.Since(start)))
+  io.WriteString(w, readable(cipher_text))
+}
+
+func log(handler http.HandlerFunc) http.HandlerFunc {
+  return func(w http.ResponseWriter, r *http.Request) {
+    name := runtime.FuncForPC(reflect.ValueOf(handler).Pointer()).Name()
+    fmt.Println("Handler function called - " + name)
+    handler(w, r)
+  }
 }
 
 func encrypt(key []byte, iv []byte, plaintext []byte) []byte {
@@ -75,13 +69,14 @@ func decrypt(key []byte, iv []byte, encryptedText []byte) []byte {
     return final
 }
 
-func readable(text []byte) {
-    plaintext := make([]string, Size);
-    for i, v := range text {
-        plaintext[i] = mappings.NumToCharMap[v]
+func readable(text []byte) string {
+    plaintext := make([]string, 3200);
+    for i, v := range text[0:3199] {
+        plaintext[i] = NumToCharMap[v]
     }
 
     // fmt.Println(strings.Join(plaintext, ""))
+    return strings.Join(plaintext, "")
 }
 
 func reverse(arr []byte) []byte {
@@ -97,7 +92,7 @@ func reverse(arr []byte) []byte {
 func bytify(textArr []string) []byte{
     plaintextBytes := make([]byte, Size);
     for i, v := range textArr {
-        plaintextBytes[i] = mappings.CharToNumMap[v]
+        plaintextBytes[i] = CharToNumMap[v]
     }
 
     return plaintextBytes
