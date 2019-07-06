@@ -3,52 +3,59 @@ package main
 import (
     "crypto/aes"
     "crypto/cipher"
-    "fmt"
+    // "fmt"
     "time"
     "strings"
     "net/http"
-    "runtime"
-    "reflect"
+    // "runtime"
+    // "reflect"
     "io"
     "github.com/julienschmidt/httprouter"
+    "log"
+    "os"
 )
 
 func main() {
-    mux := httprouter.New()
-    mux.GET("/book/:num", book)
+    router := httprouter.New()
+    router.GET("/book/:num", book)
 
     server := http.Server{
       Addr: "localhost:8080",
-      Handler: mux,
+      Handler: logger(router),
     }
 
-    fmt.Println("Serving http://localhost:8080")
     server.ListenAndServe()
+}
+
+func logger(router http.Handler) http.Handler {
+    logger := log.New(os.Stdout, "http: ", log.LstdFlags)
+    logger.Println("Serving http://localhost:8080")
+
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        start := time.Now()
+
+        router.ServeHTTP(w, r)
+
+        // log request by who(IP address)
+        requesterIP := r.RemoteAddr
+
+        logger.Printf("%s\t\t%s", r.Method, r.RequestURI)
+        log.Printf(
+                "Sent\t\t%s\t\t%v\n\n",
+                requesterIP,
+                time.Since(start),
+        )
+    })
 }
 
 func book(w http.ResponseWriter, r *http.Request, p httprouter.Params){
   num_arr := strings.Split(p.ByName("num"), "")
   plaintext := bytify(num_arr)
-  fmt.Println(num_arr)
-  fmt.Println(plaintext[0:3199])
   cipher_text := encrypt(key, iv, plaintext)
 
-
-  // fmt.Println(readable(cipher_text))
   io.WriteString(w, readable(cipher_text[0:3199]))
   io.WriteString(w, "\n\n\n")
   io.WriteString(w, readable(cipher_text[1308800:1312000]))
-}
-
-func log(handler http.HandlerFunc) http.HandlerFunc {
-  return func(w http.ResponseWriter, r *http.Request) {
-    name := runtime.FuncForPC(reflect.ValueOf(handler).Pointer()).Name()
-    fmt.Println("Handler function called - " + name)
-
-    start := time.Now()
-    handler(w, r)
-    fmt.Println(fmt.Sprintf("Time: %s\n", time.Since(start)))
-  }
 }
 
 func encrypt(key []byte, iv []byte, plaintext []byte) []byte {
