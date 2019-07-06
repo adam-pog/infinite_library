@@ -15,6 +15,26 @@ import (
 	"os"
 )
 
+type statusWriter struct {
+	http.ResponseWriter
+	status int
+	length int
+}
+
+func (w *statusWriter) WriteHeader(status int) {
+	w.status = status
+	w.ResponseWriter.WriteHeader(status)
+}
+
+func (w *statusWriter) Write(b []byte) (int, error) {
+	if w.status == 0 {
+		w.status = 200
+	}
+	n, err := w.ResponseWriter.Write(b)
+	w.length += n
+	return n, err
+}
+
 func main() {
 	router := httprouter.New()
 	router.GET("/book/:num", book)
@@ -32,13 +52,15 @@ func logger(router http.Handler) http.Handler {
 	logger.Println("Serving http://localhost:8080")
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
+		sw := statusWriter{ResponseWriter: w}
 
-		router.ServeHTTP(w, r)
+		start := time.Now()
+		router.ServeHTTP(&sw, r)
 
 		logger.Printf("%s\t\t%s", r.Method, r.RequestURI)
 		log.Printf(
-			"Sent\t\t%s\t\t%v\n\n",
+			"Sent\t\t%v\t\t%s\t\t%v\n\n",
+			sw.status,
 			r.RemoteAddr,
 			time.Since(start),
 		)
