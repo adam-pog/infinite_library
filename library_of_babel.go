@@ -13,6 +13,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strconv"
 )
 
 type statusWriter struct {
@@ -37,10 +38,10 @@ func (w *statusWriter) Write(b []byte) (int, error) {
 
 func main() {
 	router := httprouter.New()
-	router.GET("/book/:num", book)
+	router.GET("/book/:num/page/:page", book)
 
 	server := http.Server{
-		Addr:    "localhost:8080",
+		Addr:    "localhost:8081",
 		Handler: logger(router),
 	}
 
@@ -49,7 +50,7 @@ func main() {
 
 func logger(router http.Handler) http.Handler {
 	logger := log.New(os.Stdout, "http: ", log.LstdFlags)
-	logger.Println("Serving http://localhost:8080")
+	logger.Println("Serving http://localhost:8081")
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		sw := statusWriter{ResponseWriter: w}
@@ -58,7 +59,7 @@ func logger(router http.Handler) http.Handler {
 		router.ServeHTTP(&sw, r)
 
 		logger.Printf("%s\t\t%s", r.Method, r.RequestURI)
-		log.Printf(
+		logger.Printf(
 			"Sent\t\t%v\t\t%s\t\t%v\n\n",
 			sw.status,
 			r.RemoteAddr,
@@ -69,23 +70,25 @@ func logger(router http.Handler) http.Handler {
 
 func book(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	num_arr := strings.Split(p.ByName("num"), "")
+	page, _ := strconv.Atoi(p.ByName("page"))
+	starting_char := PageSize * page
+	// this assumes num_arr (and therefore the num param) is already using the characters from
+	// the mapping to represent base-256. 
 	plaintext := bytify(num_arr)
 	cipher_text := encrypt(key, iv, plaintext)
 
-	io.WriteString(w, readable(cipher_text[0:3199]))
-	io.WriteString(w, "\n\n\n")
-	io.WriteString(w, readable(cipher_text[1308800:1312000]))
+	io.WriteString(w, readable(cipher_text[starting_char:starting_char+PageSize]))
 }
 
 func encrypt(key []byte, iv []byte, plaintext []byte) []byte {
 	block, _ := aes.NewCipher(key)
 
 	mode := cipher.NewCBCEncrypter(block, iv)
-	enc := make([]byte, Size)
+	enc := make([]byte, BookSize)
 	mode.CryptBlocks(enc, plaintext)
 
 	mode = cipher.NewCBCEncrypter(block, iv)
-	final := make([]byte, Size)
+	final := make([]byte, BookSize)
 	mode.CryptBlocks(final, reverse(enc))
 	return final
 }
@@ -94,18 +97,18 @@ func decrypt(key []byte, iv []byte, encryptedText []byte) []byte {
 	block, _ := aes.NewCipher(key)
 
 	mode := cipher.NewCBCDecrypter(block, iv)
-	dec := make([]byte, Size)
+	dec := make([]byte, BookSize)
 	mode.CryptBlocks(dec, encryptedText)
 
 	mode = cipher.NewCBCDecrypter(block, iv)
-	final := make([]byte, Size)
+	final := make([]byte, BookSize)
 	mode.CryptBlocks(final, reverse(dec))
 
 	return final
 }
 
 func readable(text []byte) string {
-	plaintext := make([]string, 3200)
+	plaintext := make([]string, PageSize)
 	for i, v := range text {
 		plaintext[i] = NumToCharMap[v]
 	}
@@ -125,7 +128,7 @@ func reverse(arr []byte) []byte {
 }
 
 func bytify(textArr []string) []byte {
-	plaintextBytes := make([]byte, Size)
+	plaintextBytes := make([]byte, BookSize)
 	for i, v := range textArr {
 		plaintextBytes[i] = CharToNumMap[v]
 	}
