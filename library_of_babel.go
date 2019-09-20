@@ -3,17 +3,16 @@ package main
 import (
 	"crypto/aes"
 	"crypto/cipher"
-	// "fmt"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
-	// "runtime"
-	// "reflect"
 	"github.com/julienschmidt/httprouter"
 	"io"
 	"log"
 	"os"
 	"strconv"
+	"math/big"
 )
 
 type statusWriter struct {
@@ -38,6 +37,8 @@ func (w *statusWriter) Write(b []byte) (int, error) {
 
 func main() {
 	router := httprouter.New()
+	//probably should use post since books near the end of the library will have
+	// a considerably long num param that will likely exceed URL length resctrictions
 	router.GET("/book/:num/page/:page", book)
 
 	server := http.Server{
@@ -69,12 +70,9 @@ func logger(router http.Handler) http.Handler {
 }
 
 func book(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	num_arr := strings.Split(p.ByName("num"), "")
 	page, _ := strconv.Atoi(p.ByName("page"))
 	starting_char := PageSize * page
-	// this assumes num_arr (and therefore the num param) is already using the characters from
-	// the mapping to represent base-256. 
-	plaintext := bytify(num_arr)
+	plaintext := bytify(p.ByName("num"))
 	cipher_text := encrypt(key, iv, plaintext)
 
 	io.WriteString(w, readable(cipher_text[starting_char:starting_char+PageSize]))
@@ -127,11 +125,17 @@ func reverse(arr []byte) []byte {
 	return rev
 }
 
-func bytify(textArr []string) []byte {
-	plaintextBytes := make([]byte, BookSize)
-	for i, v := range textArr {
-		plaintextBytes[i] = CharToNumMap[v]
-	}
+func bytify(bookNum string) []byte {
+	var num big.Int
+	// need to handle error case
+	// _, success :=
+	num.SetString(bookNum, 10)
+	byteArr := num.Bytes()
 
+	plaintextBytes := make([]byte, BookSize)
+	for i, v := range byteArr {
+		plaintextBytes[i] = v
+	}
+	fmt.Println(plaintextBytes[0:100])
 	return plaintextBytes
 }
