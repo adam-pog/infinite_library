@@ -70,6 +70,7 @@ func logger(router http.Handler) http.Handler {
 }
 
 func book(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
 	page, _ := strconv.Atoi(p.ByName("page"))
 	starting_char := PageSize * page
 	plaintext := bytify(p.ByName("num"))
