@@ -11,8 +11,12 @@ class App extends React.Component {
     console.log('what a submit')
     event.preventDefault()
 
-    fetch('http://localhost:8081/book/100/page/0', {
-      method: 'GET',
+    fetch('http://localhost:8081', {
+      method: 'POST',
+      body: JSON.stringify({
+        location: "100",
+        page: 7
+      })
     })
   }
 

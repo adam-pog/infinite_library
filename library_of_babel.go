@@ -11,35 +11,38 @@ import (
 	"io"
 	"log"
 	"os"
-	"strconv"
 	"math/big"
+	"encoding/json"
 )
 
 type statusWriter struct {
 	http.ResponseWriter
-	status int
-	length int
+	Status int
+	Length int
+}
+
+type reqBody struct {
+	Location string
+	Page int
 }
 
 func (w *statusWriter) WriteHeader(status int) {
-	w.status = status
+	w.Status = status
 	w.ResponseWriter.WriteHeader(status)
 }
 
 func (w *statusWriter) Write(b []byte) (int, error) {
-	if w.status == 0 {
-		w.status = 200
+	if w.Status == 0 {
+		w.Status = 200
 	}
 	n, err := w.ResponseWriter.Write(b)
-	w.length += n
+	w.Length += n
 	return n, err
 }
 
 func main() {
 	router := httprouter.New()
-	//probably should use post since books near the end of the library will have
-	// a considerably long num param that will likely exceed URL length resctrictions
-	router.GET("/book/:num/page/:page", book)
+	router.POST("/", book)
 
 	server := http.Server{
 		Addr:    "localhost:8081",
@@ -62,18 +65,24 @@ func logger(router http.Handler) http.Handler {
 		logger.Printf("%s\t\t%s", r.Method, r.RequestURI)
 		logger.Printf(
 			"Sent\t\t%v\t\t%s\t\t%v\n\n",
-			sw.status,
+			sw.Status,
 			r.RemoteAddr,
 			time.Since(start),
 		)
 	})
 }
 
-func book(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+func book(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-	page, _ := strconv.Atoi(p.ByName("page"))
-	starting_char := PageSize * page
-	plaintext := bytify(p.ByName("num"))
+
+	decoder := json.NewDecoder(r.Body)
+	var body reqBody
+	//handle err
+  decoder.Decode(&body)
+
+	starting_char := PageSize * body.Page
+	plaintext := bytify(body.Location)
+
 	cipher_text := encrypt(key, iv, plaintext)
 
 	io.WriteString(w, readable(cipher_text[starting_char:starting_char+PageSize]))
