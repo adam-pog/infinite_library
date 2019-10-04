@@ -60,15 +60,26 @@ func logger(router http.Handler) http.Handler {
 		sw := statusWriter{ResponseWriter: w}
 
 		start := time.Now()
+		logger.Printf("%s\t\t%s", r.Method, r.RequestURI)
+
+		defer func() {
+			rec := recover();
+			if rec != nil {
+				sw.WriteHeader(http.StatusInternalServerError)
+				fmt.Println(rec)
+			}
+
+			logger.Printf(
+				"Response\t\t%v\t\t%s\t\t%v\n\n",
+				sw.Status,
+				r.RemoteAddr,
+				time.Since(start),
+			)
+		}()
+
 		router.ServeHTTP(&sw, r)
 
-		logger.Printf("%s\t\t%s", r.Method, r.RequestURI)
-		logger.Printf(
-			"Sent\t\t%v\t\t%s\t\t%v\n\n",
-			sw.Status,
-			r.RemoteAddr,
-			time.Since(start),
-		)
+
 	})
 }
 
@@ -84,7 +95,7 @@ func book(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	plaintext := bytify(body.Location)
 
 	cipher_text := encrypt(key, iv, plaintext)
-
+	fmt.Println(cipher_text[starting_char:starting_char+50])
 	io.WriteString(w, readable(cipher_text[starting_char:starting_char+PageSize]))
 }
 
@@ -146,6 +157,6 @@ func bytify(bookNum string) []byte {
 	for i, v := range byteArr {
 		plaintextBytes[i] = v
 	}
-	fmt.Println(plaintextBytes[0:100])
+
 	return plaintextBytes
 }
