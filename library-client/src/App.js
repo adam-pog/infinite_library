@@ -5,7 +5,8 @@ import './App.css';
 class App extends React.Component {
   state = {
     location: 0,
-    page: 0
+    page: 0,
+    text: ''
   }
 
   handleSubmit(event) {
@@ -18,6 +19,10 @@ class App extends React.Component {
         page: parseInt(this.state.page)
       })
     })
+    .then(response => response.text())
+    .then(data => {
+      this.setState({text: data})
+    });
   }
 
   handleLocationChange(e) {
@@ -81,6 +86,7 @@ class App extends React.Component {
           </form>
 
         </header>
+        <p>{this.state.text}</p>
       </div>
     );
   }
