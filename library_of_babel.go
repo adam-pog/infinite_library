@@ -99,42 +99,36 @@ func book(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	starting_char := PageSize * body.Page
 	plaintext := bytify(body.Location)
 
-	cipher_text := encrypt(key, iv, plaintext)
+	cipher_text := codify(plaintext, Encrypt)
 	fmt.Println(cipher_text[starting_char:starting_char+50])
 
   response := &Response{
-    Text: readable(cipher_text[starting_char:starting_char+PageSize])
+    Text: readable(cipher_text[starting_char:starting_char+PageSize]),
   }
 
   json_response, _ := json.Marshal(response)
   w.Write(json_response)
 }
 
-func encrypt(key []byte, iv []byte, plaintext []byte) []byte {
+func codify(plaintext []byte, mode string) []byte {
 	block, _ := aes.NewCipher(key)
 
-	mode := cipher.NewCBCEncrypter(block, iv)
-	enc := make([]byte, BookSize)
-	mode.CryptBlocks(enc, plaintext)
+	first_pass_text := make([]byte, BookSize)
+	codec(block, mode).CryptBlocks(first_pass_text, plaintext)
 
-	mode = cipher.NewCBCEncrypter(block, iv)
 	final := make([]byte, BookSize)
-	mode.CryptBlocks(final, reverse(enc))
+	codec(block, mode).CryptBlocks(final, reverse(first_pass_text))
 	return final
 }
 
-func decrypt(key []byte, iv []byte, encryptedText []byte) []byte {
-	block, _ := aes.NewCipher(key)
+func codec(block cipher.Block, mode string) cipher.BlockMode {
+  if mode == Encrypt {
+    return cipher.NewCBCEncrypter(block, iv)
+  } else if mode == Decrypt {
+    return cipher.NewCBCDecrypter(block, iv)
+  }
 
-	mode := cipher.NewCBCDecrypter(block, iv)
-	dec := make([]byte, BookSize)
-	mode.CryptBlocks(dec, encryptedText)
-
-	mode = cipher.NewCBCDecrypter(block, iv)
-	final := make([]byte, BookSize)
-	mode.CryptBlocks(final, reverse(dec))
-
-	return final
+  return nil
 }
 
 func readable(text []byte) string {
