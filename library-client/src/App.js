@@ -19,9 +19,9 @@ class App extends React.Component {
         page: parseInt(this.state.page)
       })
     })
-    .then(response => response.text())
+    .then(response => response.json())
     .then(data => {
-      this.setState({text: data})
+      this.setState({text: data.text})
     });
   }
 

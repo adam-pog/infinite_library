@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 	"github.com/julienschmidt/httprouter"
-	"io"
 	"log"
 	"os"
 	"math/big"
@@ -24,6 +23,10 @@ type statusWriter struct {
 type reqBody struct {
 	Location string
 	Page int
+}
+
+type Response struct {
+  Text string `json:"text"`
 }
 
 func (w *statusWriter) WriteHeader(status int) {
@@ -85,6 +88,8 @@ func logger(router http.Handler) http.Handler {
 
 func book(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+  w.Header().Set("Content-Type", "application/json")
+
 
 	decoder := json.NewDecoder(r.Body)
 	var body reqBody
@@ -96,7 +101,13 @@ func book(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 	cipher_text := encrypt(key, iv, plaintext)
 	fmt.Println(cipher_text[starting_char:starting_char+50])
-	io.WriteString(w, readable(cipher_text[starting_char:starting_char+PageSize]))
+
+  response := &Response{
+    Text: readable(cipher_text[starting_char:starting_char+PageSize])
+  }
+
+  json_response, _ := json.Marshal(response)
+  w.Write(json_response)
 }
 
 func encrypt(key []byte, iv []byte, plaintext []byte) []byte {
