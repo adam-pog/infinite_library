@@ -6,8 +6,13 @@ var iv = []byte{133, 165, 73, 140, 70, 66, 14, 157, 218, 146, 180, 164, 161, 168
 const(
   BookSize = 1312000
   PageSize = 3200
-  Encrypt = "encrypt"
-  Decrypt = "decrypt"
+)
+
+type CodecMode string
+
+const(
+  Encrypt CodecMode = "encrypt"
+  Decrypt CodecMode = "decrypt"
 )
 
 

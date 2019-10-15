@@ -110,7 +110,7 @@ func book(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
   w.Write(json_response)
 }
 
-func codify(plaintext []byte, mode string) []byte {
+func codify(plaintext []byte, mode CodecMode) []byte {
 	block, _ := aes.NewCipher(key)
 
 	first_pass_text := make([]byte, BookSize)
@@ -121,7 +121,7 @@ func codify(plaintext []byte, mode string) []byte {
 	return final
 }
 
-func codec(block cipher.Block, mode string) cipher.BlockMode {
+func codec(block cipher.Block, mode CodecMode) cipher.BlockMode {
   if mode == Encrypt {
     return cipher.NewCBCEncrypter(block, iv)
   } else if mode == Decrypt {
