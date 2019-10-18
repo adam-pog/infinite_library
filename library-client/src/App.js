@@ -6,7 +6,7 @@ class App extends React.Component {
   state = {
     location: 0,
     page: 0,
-    text: ''
+    textLines: []
   }
 
   handleSubmit(event) {
@@ -21,7 +21,7 @@ class App extends React.Component {
     })
     .then(response => response.json())
     .then(data => {
-      this.setState({text: data.text})
+      this.setState({textLines: data.text})
     });
   }
 
@@ -46,47 +46,36 @@ class App extends React.Component {
   render() {
     return (
       <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <p>
-            Edit <code>src/App.js</code> and save to reload.
-          </p>
-          <a
-            className="App-link"
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Learn React
-          </a>
+        <form onSubmit={(e) => this.handleSubmit(e)}>
+          <label>
+            Location:
+            <textarea
+              type="text"
+              name="Location"
+              placeholder="(0..9)*"
+              onChange={(e) => this.handleLocationChange(e)}
+              onKeyDown={(e) => this.onKeydown(e)}
+            />
+          </label>
+          <br></br>
+          <label>
+            Page:
+            <input
+              type="number"
+              name="Page"
+              placeholder="0-409"
+              onChange={(e) => this.handlePageChange(e)}
+              onKeyDown={(e) => this.onKeydown(e)}
+            />
+          </label>
+          <input type="submit" value="Submit"/>
+        </form>
 
-          <form onSubmit={(e) => this.handleSubmit(e)}>
-            <label>
-              Location:
-              <textarea
-                type="text"
-                name="Location"
-                placeholder="(0..9)*"
-                onChange={(e) => this.handleLocationChange(e)}
-                onKeyDown={(e) => this.onKeydown(e)}
-              />
-            </label>
-            <br></br>
-            <label>
-              Page:
-              <input
-                type="number"
-                name="Page"
-                placeholder="0-409"
-                onChange={(e) => this.handlePageChange(e)}
-                onKeyDown={(e) => this.onKeydown(e)}
-              />
-            </label>
-            <input type="submit" value="Submit"/>
-          </form>
-
-        </header>
-        <p>{this.state.text}</p>
+        <div className="book-text">
+          {this.state.textLines.map((value)=> {
+            return <p>{value}</p>
+          })}
+        </div>
       </div>
     );
   }

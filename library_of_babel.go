@@ -26,7 +26,7 @@ type reqBody struct {
 }
 
 type Response struct {
-  Text string `json:"text"`
+  TextLines []string `json:"text"`
 }
 
 func (w *statusWriter) WriteHeader(status int) {
@@ -102,8 +102,10 @@ func book(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	cipher_text := codify(plaintext, Encrypt)
 	fmt.Println(cipher_text[starting_char:starting_char+50])
 
+  readableText := readable(cipher_text[starting_char:starting_char+PageSize])
+
   response := &Response{
-    Text: readable(cipher_text[starting_char:starting_char+PageSize]),
+    TextLines: textLines(readableText),
   }
 
   json_response, _ := json.Marshal(response)
@@ -131,21 +133,31 @@ func codec(block cipher.Block, mode CodecMode) cipher.BlockMode {
   return nil
 }
 
-func readable(text []byte) string {
+func readable(text []byte) []string {
 	plaintext := make([]string, PageSize)
 	for i, v := range text {
 		plaintext[i] = NumToCharMap[v]
 	}
 
-	// fmt.Println(strings.Join(plaintext, ""))
-	return strings.Join(plaintext, "")
+	return plaintext
 }
 
-func reverse(arr []byte) []byte {
-	rev := make([]byte, len(arr))
+func textLines(text []string) []string {
+  var lines []string
 
-	for i, j := len(arr)-1, 0; i >= 0; i, j = i-1, j+1 {
-		rev[j] = arr[i]
+  for i := 0; i < PageSize; i += 80 {
+    slc := text[i:i+80]
+    lines = append(lines, strings.Join(slc, ""))
+  }
+
+  return lines
+}
+
+func reverse(slice []byte) []byte {
+	rev := make([]byte, len(slice))
+
+	for i, j := len(slice)-1, 0; i >= 0; i, j = i-1, j+1 {
+		rev[j] = slice[i]
 	}
 
 	return rev
@@ -156,10 +168,10 @@ func bytify(bookNum string) []byte {
 	// need to handle error case
 	// _, success :=
 	num.SetString(bookNum, 10)
-	byteArr := num.Bytes()
+	byteSlice := num.Bytes()
 
 	plaintextBytes := make([]byte, BookSize)
-	for i, v := range byteArr {
+	for i, v := range byteSlice {
 		plaintextBytes[i] = v
 	}
 
