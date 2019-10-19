@@ -3,15 +3,15 @@ package main
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"encoding/json"
 	"fmt"
-	"net/http"
-	"strings"
-	"time"
 	"github.com/julienschmidt/httprouter"
 	"log"
-	"os"
 	"math/big"
-	"encoding/json"
+	"net/http"
+	"os"
+	"strings"
+	"time"
 )
 
 type statusWriter struct {
@@ -22,11 +22,11 @@ type statusWriter struct {
 
 type reqBody struct {
 	Location string
-	Page int
+	Page     int
 }
 
 type Response struct {
-  TextLines []string `json:"text"`
+	TextLines []string `json:"text"`
 }
 
 func (w *statusWriter) WriteHeader(status int) {
@@ -66,7 +66,7 @@ func logger(router http.Handler) http.Handler {
 		logger.Printf("%s\t\t%s", r.Method, r.RequestURI)
 
 		defer func() {
-			rec := recover();
+			rec := recover()
 			if rec != nil {
 				sw.WriteHeader(http.StatusInternalServerError)
 				fmt.Println(rec)
@@ -82,55 +82,53 @@ func logger(router http.Handler) http.Handler {
 
 		router.ServeHTTP(&sw, r)
 
-
 	})
 }
 
 func book(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-  w.Header().Set("Content-Type", "application/json")
-
+	w.Header().Set("Content-Type", "application/json")
 
 	decoder := json.NewDecoder(r.Body)
 	var body reqBody
 	//handle err
-  decoder.Decode(&body)
+	decoder.Decode(&body)
 
-	starting_char := PageSize * body.Page
+	startingChar := PageSize * body.Page
 	plaintext := bytify(body.Location)
 
-	cipher_text := codify(plaintext, Encrypt)
-	fmt.Println(cipher_text[starting_char:starting_char+50])
+	cipherText := codify(plaintext, Encrypt)
+	fmt.Println(cipherText[startingChar : startingChar+50])
 
-  readableText := readable(cipher_text[starting_char:starting_char+PageSize])
+	readableText := readable(cipherText[startingChar : startingChar+PageSize])
 
-  response := &Response{
-    TextLines: textLines(readableText),
-  }
+	response := &Response{
+		TextLines: textLines(readableText),
+	}
 
-  json_response, _ := json.Marshal(response)
-  w.Write(json_response)
+	jsonResponse, _ := json.Marshal(response)
+	w.Write(jsonResponse)
 }
 
 func codify(plaintext []byte, mode CodecMode) []byte {
 	block, _ := aes.NewCipher(key)
 
-	first_pass_text := make([]byte, BookSize)
-	codec(block, mode).CryptBlocks(first_pass_text, plaintext)
+	firstPassText := make([]byte, BookSize)
+	codec(block, mode).CryptBlocks(firstPassText, plaintext)
 
 	final := make([]byte, BookSize)
-	codec(block, mode).CryptBlocks(final, reverse(first_pass_text))
+	codec(block, mode).CryptBlocks(final, reverse(firstPassText))
 	return final
 }
 
 func codec(block cipher.Block, mode CodecMode) cipher.BlockMode {
-  if mode == Encrypt {
-    return cipher.NewCBCEncrypter(block, iv)
-  } else if mode == Decrypt {
-    return cipher.NewCBCDecrypter(block, iv)
-  }
+	if mode == Encrypt {
+		return cipher.NewCBCEncrypter(block, iv)
+	} else if mode == Decrypt {
+		return cipher.NewCBCDecrypter(block, iv)
+	}
 
-  return nil
+	return nil
 }
 
 func readable(text []byte) []string {
@@ -143,14 +141,14 @@ func readable(text []byte) []string {
 }
 
 func textLines(text []string) []string {
-  var lines []string
+	var lines []string
 
-  for i := 0; i < PageSize; i += 80 {
-    slc := text[i:i+80]
-    lines = append(lines, strings.Join(slc, ""))
-  }
+	for i := 0; i < PageSize; i += 80 {
+		slc := text[i : i+80]
+		lines = append(lines, strings.Join(slc, ""))
+	}
 
-  return lines
+	return lines
 }
 
 func reverse(slice []byte) []byte {
