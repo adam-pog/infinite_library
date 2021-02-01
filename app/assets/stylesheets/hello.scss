@@ -1,0 +1,18 @@
+// Place all the styles related to the hello controller here.
+// They will automatically be included in application.css.
+// You can use Sass (SCSS) here: https://sass-lang.com/
+body {
+  text-align: center;
+  background-color: #282c34;
+  display: block;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.book-text {
+  display: inline-block;
+  font-family: monospace;
+  font-size: 18px;
+  width: 840px;
+}

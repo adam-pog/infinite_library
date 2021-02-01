@@ -1,0 +1,7 @@
+<p class='book-text'> <%= @text %> </p>
+
+<%= form_tag("/world", method: "post") do %>
+  <%= label_tag(:thing, "Search for:") %>
+  <%= text_field_tag(:thing) %>
+  <%= submit_tag("Search") %>
+<% end %>
