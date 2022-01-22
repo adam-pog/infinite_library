@@ -17,10 +17,12 @@ BOOK_PAD = 1312000
 def get_page():
     return {
         "text": split_text(
-            generate_text(str(request.json['book']), int(request.json['page']))
+            generate_text(
+                str(request.json['book']),
+                int(request.json['page'])
+            )
         )
     }
-
 
 
 def generate_text(book, page):
