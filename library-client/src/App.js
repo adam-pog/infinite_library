@@ -75,7 +75,7 @@ class App extends React.Component {
 
         <div className="book-text">
           {this.state.textLines.map((value)=> {
-            return <p>{value}</p>
+            return <p className='textLine'>{value}</p>
           })}
         </div>
       </div>
