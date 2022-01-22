@@ -1,5 +1,6 @@
-from flask import Flask
 import json
+from flask import Flask, request
+from flask_cors import CORS
 from base64 import b64encode
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
@@ -7,17 +8,19 @@ from Crypto.Random import get_random_bytes
 from mappings import NUM_TO_CHAR_MAP
 
 app = Flask(__name__)
+CORS(app)
 KEY = b'\x99\x80\x8d\xdf\x0c\x95P\xb23\xc3\x00).\xdd6\xca'
 IV  = b'\x92\xd3L\x18\xa5\x8d%c\xf1T\x82\x02\xd0\x17\xb2\xb4'
 BOOK_PAD = 1312000
 
-@app.route('/book/<int:book>/page/<int:page>')
-def get_page(book, page):
-    return f"<p>Book: {book}, Page: {page}</p>"
+@app.route('/book', methods=['POST'])
+def get_page():
+    return {
+        "text": split_text(
+            generate_text(str(request.json['book']), int(request.json['page']))
+        )
+    }
 
-# @app.route('/hello/<string:name>')
-# def hello(name):
-#     return f"<p>Hello, {name}</p>"
 
 
 def generate_text(book, page):
@@ -31,8 +34,13 @@ def generate_text(book, page):
 
     start = (page-1) * 3200
     end = page * 3200
+
     return text[start:end]
 
+def split_text(text):
+    return [
+        text[(i * 80):(i * 80) + 80] for i in range(40)
+    ]
 
 
 

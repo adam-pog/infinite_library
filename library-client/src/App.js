@@ -1,10 +1,9 @@
 import React from 'react';
-import logo from './logo.svg';
 import './App.css';
 
 class App extends React.Component {
   state = {
-    location: 0,
+    book: 0,
     page: 0,
     textLines: []
   }
@@ -12,12 +11,15 @@ class App extends React.Component {
   handleSubmit(event) {
     event.preventDefault()
 
-    fetch('http://localhost:8081', {
+    fetch(`http://localhost:5000/book`, {
       method: 'POST',
       body: JSON.stringify({
-        location: this.state.location,
-        page: parseInt(this.state.page)
-      })
+        book: this.state.book,
+        page: this.state.page
+      }),
+      headers: {
+        "Content-Type": "application/json"
+      }
     })
     .then(response => response.json())
     .then(data => {
@@ -25,9 +27,9 @@ class App extends React.Component {
     });
   }
 
-  handleLocationChange(e) {
+  handleBookChange(e) {
     this.setState({
-      location: e.target.value.replace(/\s/g, '')
+      book: e.target.value.replace(/\s/g, '')
     })
   }
 
@@ -53,7 +55,7 @@ class App extends React.Component {
               type="text"
               name="Location"
               placeholder="(0..9)*"
-              onChange={(e) => this.handleLocationChange(e)}
+              onChange={(e) => this.handleBookChange(e)}
               onKeyDown={(e) => this.onKeydown(e)}
             />
           </label>
@@ -63,7 +65,7 @@ class App extends React.Component {
             <input
               type="number"
               name="Page"
-              placeholder="0-409"
+              placeholder="1-410"
               onChange={(e) => this.handlePageChange(e)}
               onKeyDown={(e) => this.onKeydown(e)}
             />
