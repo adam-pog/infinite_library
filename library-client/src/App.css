@@ -6,13 +6,14 @@
 }
 
 body {
-  background-color: #282c34;
+  /* background-color: #282c34; */
+  background-color: #1e293b;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: #d6d4e6;
   width: 100%;
 }
 
@@ -25,6 +26,8 @@ body {
 }
 
 .book-text {
+  height: 900px;
+  width: 900px;
   font-family: monospace;
   text-align: justify;
   font-size: 15px;
@@ -37,4 +40,16 @@ body {
 
 .textLine {
   margin: 2px;
+}
+
+.form {
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 10px;
+}
+
+.input {
+  text-decoration: none;
+  background: transparent;
+  border: none;
 }

@@ -48,13 +48,14 @@ class App extends React.Component {
   render() {
     return (
       <div className="App">
-        <form onSubmit={(e) => this.handleSubmit(e)}>
+        <form onSubmit={(e) => this.handleSubmit(e)} className='form'>
           <label>
             Location:
             <textarea
               type="text"
+              className='input'
               name="Location"
-              placeholder="(0..9)*"
+              placeholder="Book number"
               onChange={(e) => this.handleBookChange(e)}
               onKeyDown={(e) => this.onKeydown(e)}
             />
@@ -65,7 +66,8 @@ class App extends React.Component {
             <input
               type="number"
               name="Page"
-              placeholder="1-410"
+              className='input'
+              placeholder="Page (1-410)"
               onChange={(e) => this.handlePageChange(e)}
               onKeyDown={(e) => this.onKeydown(e)}
             />
