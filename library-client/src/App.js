@@ -4,13 +4,21 @@ import './App.css';
 class App extends React.Component {
   state = {
     book: 0,
-    page: 0,
+    page: 1,
     textLines: []
+  }
+
+  componentDidMount() {
+    this.fetchBook()
   }
 
   handleSubmit(event) {
     event.preventDefault()
 
+    this.fetchBook()
+  }
+
+  fetchBook() {
     fetch(`http://localhost:5000/book`, {
       method: 'POST',
       body: JSON.stringify({
@@ -56,6 +64,7 @@ class App extends React.Component {
               className='input'
               name="Location"
               placeholder="Book number"
+              value={this.state.book}
               onChange={(e) => this.handleBookChange(e)}
               onKeyDown={(e) => this.onKeydown(e)}
             />
@@ -68,6 +77,7 @@ class App extends React.Component {
               name="Page"
               className='input'
               placeholder="Page (1-410)"
+              value={this.state.page}
               onChange={(e) => this.handlePageChange(e)}
               onKeyDown={(e) => this.onKeydown(e)}
             />
