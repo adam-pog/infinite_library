@@ -15,15 +15,17 @@ CORS(app)
 KEY = b'\x99\x80\x8d\xdf\x0c\x95P\xb23\xc3\x00).\xdd6\xca'
 IV  = b'\x92\xd3L\x18\xa5\x8d%c\xf1T\x82\x02\xd0\x17\xb2\xb4'
 BOOK_PAD = 1312000
+IMAGE_WIDTH = 500
+IMAGE_HEIGHT = 656
 
 @app.route('/book', methods=['POST'])
 def get_page():
     body = request.json
-
+    plain = create_plaintext_book(body['book'])
     return {
         "text": split_text(
             generate_text(
-                create_plaintext_book(body['book']),
+                plain,
                 int(body['page'])
             )
         )
@@ -70,11 +72,19 @@ def create_plaintext_book(img):
     _, data = request.json['book'].split(',', 1)
     img = Image.open(BytesIO(b64decode(data)))
     pixels = img.getdata()
-
+    # print('ASDGFGSADG', len(pixels))
     book = []
-    for pixel_tuple in pixels:
-        book += [p for p in pixel_tuple]
-
+    new_pixels = []
+    for i in range(0, 328000):
+        book += [p for p in pixels[i]]
+        new_pixels.append(pixels[i])
+    # for pixel_tuple in pixels:
+    #     book += [p for p in pixel_tuple]
+    newi = Image.new('RGBA', (500, 656))
+    newi.putdata(new_pixels)
+    newi.save('temp_file.png')
+    # breakpoint()
+    print(len(book))
     return book
 
 
